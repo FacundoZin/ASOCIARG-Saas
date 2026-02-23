@@ -1,0 +1,59 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+	<ItemGroup>
+		<!-- Excluí la base -->
+
+		<!-- Excluí con ruta absoluta -->
+
+		<!-- Excluí por patrón para cubrir cualquier ubicación relativa -->
+		<Compile Remove="Infrastructure\Persistence\Migrations\**" />
+		<DotNetWatchItems Remove="**/club.db" />
+		<DotNetWatchItems Remove="**/club.db-wal" />
+		<DotNetWatchItems Remove="**/club.db-shm" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<WatchExclude Include="**/club.db" />
+		<WatchExclude Include="**/club.db-wal" />
+		<WatchExclude Include="**/club.db-shm" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Content Remove="Infrastructure\Persistence\Migrations\**" />
+	  <EmbeddedResource Remove="Infrastructure\Persistence\Migrations\**" />
+	  <None Remove="Infrastructure\Persistence\Migrations\**" />
+	  <WatchExclude Remove="Infrastructure\Persistence\Migrations\**" />
+	</ItemGroup>
+
+
+	<ItemGroup>
+    <PackageReference Include="Aspire.Npgsql.EntityFrameworkCore.PostgreSQL" Version="13.1.0" />
+    <PackageReference Include="mercadopago-sdk" Version="2.8.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.0">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.0">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Quartz" Version="3.15.1" />
+    <PackageReference Include="Quartz.Extensions.Hosting" Version="3.15.1" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+    <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.0" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.0.0" />
+  </ItemGroup>
+
+
+	<ItemGroup>
+	  <Folder Include="Domain\ModuloGestionViajes\Repositories\" />
+	</ItemGroup>
+
+</Project>
