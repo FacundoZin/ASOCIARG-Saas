@@ -7,5 +7,7 @@ namespace APIClub.Contrrollers
     [ApiController]
     public class ClientConfigsController : ControllerBase
     {
+
+
     }
 }
