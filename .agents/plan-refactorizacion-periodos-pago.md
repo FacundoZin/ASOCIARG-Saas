@@ -58,7 +58,7 @@ El sistema actual tiene **lógica de períodos semestrales hardcodeada** en al m
 
 #### 1.1 — Crear enum `TipoPeriodo`
 
-**Archivo**: `APIClub/Domain/Enums/TipoPeriodo.cs`
+**Archivo**: `APIClub/Domain/Enums/PeriodosPagoCuota.cs` (hecho)
 
 ```csharp
 namespace APIClub.Domain.Enums
