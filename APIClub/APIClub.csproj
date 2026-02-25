@@ -53,9 +53,6 @@
 
 
 	<ItemGroup>
-	  <Folder Include="Domain\ClientConfigs\Models\" />
-	  <Folder Include="Domain\ClientConfigs\Repositories\" />
-	  <Folder Include="Domain\ClientConfigs\UseCases\" />
 	  <Folder Include="Domain\ModuloGestionViajes\Repositories\" />
 	</ItemGroup>
 

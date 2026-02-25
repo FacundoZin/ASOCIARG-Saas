@@ -66,6 +66,14 @@ const modules = [
     color: 'text-indigo-600',
     iconBg: 'bg-indigo-100',
   },
+  {
+    title: 'Configuraciones',
+    description: 'Ajuste y personalize el sistema a la medida de su asociacion',
+    icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z',
+    route: '/configuracion',
+    color: 'text-slate-600',
+    iconBg: 'bg-slate-100',
+  },
 ]
 </script>
 
@@ -78,21 +86,40 @@ const modules = [
         <nav class="flex mb-2" aria-label="Breadcrumb">
           <ol class="inline-flex items-center space-x-1 md:space-x-3">
             <li class="inline-flex items-center">
-              <a href="#" class="inline-flex items-center text-sm font-medium text-slate-500 hover:text-blue-600">
-                <svg class="w-3 h-3 mr-2.5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor"
-                  viewBox="0 0 20 20">
+              <a
+                href="#"
+                class="inline-flex items-center text-sm font-medium text-slate-500 hover:text-blue-600"
+              >
+                <svg
+                  class="w-3 h-3 mr-2.5"
+                  aria-hidden="true"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
                   <path
-                    d="m19.707 9.293-2-2-7-7a1 1 0 0 0-1.414 0l-7 7-2 2a1 1 0 0 0 1.414 1.414L2 10.414V18a2 2 0 0 0 2 2h3a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h3a2 2 0 0 0 2-2v-7.586l.293.293a1 1 0 0 0 1.414-1.414Z" />
+                    d="m19.707 9.293-2-2-7-7a1 1 0 0 0-1.414 0l-7 7-2 2a1 1 0 0 0 1.414 1.414L2 10.414V18a2 2 0 0 0 2 2h3a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h3a2 2 0 0 0 2-2v-7.586l.293.293a1 1 0 0 0 1.414-1.414Z"
+                  />
                 </svg>
                 Inicio
               </a>
             </li>
             <li>
               <div class="flex items-center">
-                <svg class="w-3 h-3 text-slate-400 mx-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"
-                  fill="none" viewBox="0 0 6 10">
-                  <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="m1 9 4-4-4-4" />
+                <svg
+                  class="w-3 h-3 text-slate-400 mx-1"
+                  aria-hidden="true"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 6 10"
+                >
+                  <path
+                    stroke="currentColor"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="m1 9 4-4-4-4"
+                  />
                 </svg>
                 <span class="ml-1 text-sm font-medium text-slate-700 md:ml-2">Panel General</span>
               </div>
@@ -107,26 +134,54 @@ const modules = [
 
       <!-- Modules Grid -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <button v-for="(module, index) in modules" :key="index" @click="navigateTo(module.route)"
-          class="group relative flex flex-col p-6 bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 text-left overflow-hidden cursor-pointer">
+        <button
+          v-for="(module, index) in modules"
+          :key="index"
+          @click="navigateTo(module.route)"
+          class="group relative flex flex-col p-6 bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 text-left overflow-hidden cursor-pointer"
+        >
           <div class="relative z-10 flex items-start justify-between mb-5">
-            <div class="p-3.5 rounded-xl transition-colors duration-300 shadow-sm"
-              :class="[module.iconBg, module.color]">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24"
-                stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="module.icon" />
+            <div
+              class="p-3.5 rounded-xl transition-colors duration-300 shadow-sm"
+              :class="[module.iconBg, module.color]"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-7 w-7"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  :d="module.icon"
+                />
               </svg>
             </div>
             <div class="text-slate-300 group-hover:text-blue-500 transition-colors duration-300">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="h-5 w-5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 5l7 7-7 7"
+                />
               </svg>
             </div>
           </div>
 
           <div class="relative z-10 mt-auto">
-            <h3 class="text-lg font-bold text-slate-900 mb-1 group-hover:text-blue-700 transition-colors duration-300">
+            <h3
+              class="text-lg font-bold text-slate-900 mb-1 group-hover:text-blue-700 transition-colors duration-300"
+            >
               {{ module.title }}
             </h3>
             <p class="text-sm text-slate-500 leading-relaxed font-medium">
@@ -139,16 +194,21 @@ const modules = [
 
     <!-- Footer -->
     <footer class="border-t border-slate-200 bg-white mt-auto py-8">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4">
+      <div
+        class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4"
+      >
         <div class="text-center md:text-left">
           <p class="text-slate-500 text-sm font-medium">
-            &copy; {{ new Date().getFullYear() }} Sistema Asociación Casa del Jubilado.
+            &copy; {{ new Date().getFullYear() }} ASOCIARG.
           </p>
           <div class="flex items-center gap-2 mt-1">
             <p class="text-slate-400 text-xs">Versión 1.0.0</p>
             <template v-if="isSuperAdmin">
               <span class="text-slate-300 text-xs">•</span>
-              <router-link to="/usuarios" class="text-slate-400 text-xs hover:text-blue-600 transition-colors">
+              <router-link
+                to="/usuarios"
+                class="text-slate-400 text-xs hover:text-blue-600 transition-colors"
+              >
                 Gestión de Usuarios
               </router-link>
             </template>

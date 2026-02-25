@@ -17,6 +17,7 @@ import GestionUsuariosView from '@/views/ModuloGestionUsuarios/GestionUsuariosVi
 import DashboardAnaliticas from '@/views/ModuloAnaliticas-Balances/DashboardAnaliticas.vue'
 import ViajesDashboard from "@/views/ModuloGestionViajes/ViajesDashboard.vue";
 import ViajeDetailView from "@/views/ModuloGestionViajes/ViajeDetailView.vue";
+import configView from '../views/Configs/configView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -32,6 +33,12 @@ const router = createRouter({
       name: 'home',
       component: HomeView,
       meta: { requiresAuth: true }
+    },
+    {
+      path: '/configuracion',
+      name: 'configuracion',
+      component: configView,
+      meta: { module: 'configuracion', headerTitle: 'Configuraciones', requiresAuth: true }
     },
     {
       path: '/usuarios',
