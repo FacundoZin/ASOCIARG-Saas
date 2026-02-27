@@ -1,7 +1,6 @@
 ﻿using APIClub.Application.Dtos.Socios;
 using APIClub.Domain.GestionSocios.Models;
 using APIClub.Domain.ModuloGestionCuotas.Models;
-
 namespace APIClub.Domain.GestionSocios.Repositories
 {
     public interface ISocioRepository
@@ -16,12 +15,12 @@ namespace APIClub.Domain.GestionSocios.Repositories
         Task<bool> SocioExistsForUpdate(string dni, int id);
         Task<Socio?> GetSocioByIdWithCuotas(int id);
         Task<Socio?> GetSocioByIdIgnoreFilter(int id);
-        Task<List<Socio>> GetSociosDeudores(int anioActual, int semestreActual);
-        Task<(List<Socio> Items, int TotalCount)> GetSociosDeudoresPaginado(int anioActual, int semestreActual, int pageNumber, int pageSize);
+        Task<List<Socio>> GetSociosDeudores(int anioActual, int numeroPeriodoActual);
+        Task<(List<Socio> Items, int TotalCount)> GetSociosDeudoresPaginado(int anioActual, int numeroPeriodoActual, int pageNumber, int pageSize);
         Task RemoveSocios(Socio socio);
         Task<List<Cuota>> GetCuotasSocioById(int socioId);
-        Task<(List<PreviewSocioForCobranzaDto> Items, int TotalCount)> GetSociosDeudoresByLote(int IdLote, int anioActual, int semestreActual, int pageNumber, int pageSize);
-        Task<List<Socio>> GetSociosDeudoresWithPreferenceLinkDePagoPaginado(int anioActual, int semestreActual, int pageNumber, int pageSize);
+        Task<(List<PreviewSocioForCobranzaDto> Items, int TotalCount)> GetSociosDeudoresByLote(int IdLote, int anioActual, int numeroPeriodoActual, int pageNumber, int pageSize);
+        Task<List<Socio>> GetSociosDeudoresWithPreferenceLinkDePagoPaginado(int anioActual, int numeroPeriodoActual, int pageNumber, int pageSize);
         Task<(List<Socio> Items, int TotalCount)> GetSociosPaginado(int pageNumber, int pageSize);
     }
 }

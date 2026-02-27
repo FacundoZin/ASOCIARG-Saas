@@ -36,6 +36,8 @@ using APIClub.Infrastructure.Interfaces;
 using APIClub.Domain.AlquilerArticulos;
 using APIClub.Domain.ModuloGestionViajes.useCases;
 using APIClub.Domain.ModuloGestionViajes.Repositories;
+using APIClub.Domain.ClientConfigs.Repositories;
+using APIClub.Domain.ClientConfigs.UseCases;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -89,6 +91,7 @@ builder.Services.AddScoped<IMercadoPagoService, MPService>();
 builder.Services.AddScoped<INotificationsService, NotificacionsService>();
 builder.Services.AddScoped<IAnaliticasService, AnaliticasService>();
 builder.Services.AddScoped<IViajesServices, ViajesService>();
+builder.Services.AddScoped<IConfigsService, ConfigServices>();
 
 
 
@@ -103,6 +106,8 @@ builder.Services.AddScoped<ISocioIntegrityValidator, SocioIntegrityValidator>();
 builder.Services.AddScoped<IPagoCuotaValidator, PagoCuotaValidator>();
 builder.Services.AddScoped<IDataSeeder, DatabaseSeeder>();
 
+//SINGLETONS
+builder.Services.AddSingleton<CalculatorPeriodoProvider>();
 
 // registrar repositorios
 builder.Services.AddScoped<ISocioRepository, SociosRepository>();
@@ -117,7 +122,7 @@ builder.Services.AddScoped<IUsuariosRepository, UsuariosRepository>();
 builder.Services.AddScoped<IAnaliticasRepository, AnaliticasRepository>();
 builder.Services.AddScoped<IViajeReadRepository, ViajeReadRepository>();
 builder.Services.AddScoped<IViajeWriteRepository, ViajeWriteRepository>();
-
+builder.Services.AddScoped<IAssociationConfigsRepository, AssociationConfigsRepository>();
 
 builder.Services.AddQuartz(q =>
 {

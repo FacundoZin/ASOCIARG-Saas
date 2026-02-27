@@ -1,6 +1,5 @@
 ﻿using APIClub.Application.Common;
 using APIClub.Application.Dtos.Cuota;
-using APIClub.Domain.GestionSocios.Models;
 using APIClub.Domain.GestionSocios.Repositories;
 using APIClub.Domain.ModuloGestionCuotas.Models;
 using APIClub.Infrastructure.Persistence.Data;
@@ -61,7 +60,7 @@ namespace APIClub.Infrastructure.Persistence.Repositorio
                     Monto = c.Monto,
                     FormaDePago = c.FormaDePago,
                     Anio = c.Anio,
-                    Semestre = c.Semestre,
+                    NumeroPeriodo = c.NumeroPeriodo,
                     NombreSocio = c.Socio!.Nombre,
                     ApellidoSocio = c.Socio!.Apellido
                 })
@@ -70,11 +69,11 @@ namespace APIClub.Infrastructure.Persistence.Repositorio
             return new PagedResult<CuotaConSocioDto>(items, totalCount, pageNumber, pageSize);
         }
 
-        public async Task<PagedResult<CuotaConSocioDto>> ObtenerCuotasPorPeriodo(int anio, int semestre, int pageNumber, int pageSize)
+        public async Task<PagedResult<CuotaConSocioDto>> ObtenerCuotasPorPeriodo(int anio, int numeroPeriodo, int pageNumber, int pageSize)
         {
             var query = _dbcontext.Cuotas
                 .Include(c => c.Socio)
-                .Where(c => c.Anio == anio && c.Semestre == semestre)
+                .Where(c => c.Anio == anio && c.NumeroPeriodo == numeroPeriodo)
                 .OrderByDescending(c => c.FechaPago)
                 .ThenByDescending(c => c.Id);
 
@@ -90,13 +89,19 @@ namespace APIClub.Infrastructure.Persistence.Repositorio
                     Monto = c.Monto,
                     FormaDePago = c.FormaDePago,
                     Anio = c.Anio,
-                    Semestre = c.Semestre,
+                    NumeroPeriodo = c.NumeroPeriodo,
                     NombreSocio = c.Socio!.Nombre,
                     ApellidoSocio = c.Socio!.Apellido
                 })
                 .ToListAsync();
 
             return new PagedResult<CuotaConSocioDto>(items, totalCount, pageNumber, pageSize);
+        }
+
+        public Task<bool> PeriodoYaPagado(int socioId, int anio, int numeroPeriodo)
+        {
+            return _dbcontext.Cuotas
+                .AnyAsync(c => c.SocioId == socioId && c.Anio == anio && c.NumeroPeriodo == numeroPeriodo);
         }
     }
 }

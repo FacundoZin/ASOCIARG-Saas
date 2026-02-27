@@ -6,16 +6,21 @@ using APIClub.Infrastructure.Persistence.Data;
 using Microsoft.EntityFrameworkCore;
 using APIClub.Application.Helpers;
 using APIClub.Domain.ModuloGestionCuotas.Models;
+using APIClub.Domain.Shared.DomainServices;
+using APIClub.Application.Services;
 
 namespace APIClub.Infrastructure.Persistence.Repositorio
 {
     public class SociosRepository : ISocioRepository
     {
         private readonly AppDbcontext _Dbcontext;
+        private readonly CalculatorPeriodoProvider _calculatorPeriodoProvider;
 
-        public SociosRepository(AppDbcontext dbcontext)
+        public SociosRepository(AppDbcontext dbcontext, CalculatorPeriodoProvider providerCalculator)
         {
+
             _Dbcontext = dbcontext;
+            _calculatorPeriodoProvider = providerCalculator;
         }
 
         public async Task cargarSocio(Socio socio)
@@ -75,33 +80,39 @@ namespace APIClub.Infrastructure.Persistence.Repositorio
 
         public async Task<Socio?> GetSocioByIdWithCuotas(int id)
         {
-            var FechaAsociacionSocio = await _Dbcontext.Socios
+            var socioData = await _Dbcontext.Socios
                 .Select(s => new { s.Id, s.FechaAsociacion })
                 .FirstOrDefaultAsync(s => s.Id == id);
 
-            int semestreIngreso = FechaAsociacionSocio!.FechaAsociacion.Month <= 6 ? 1 : 2;
+            if (socioData == null) return null;
+
+            var calculator = await _calculatorPeriodoProvider.GetCalculator();
+
+            int periodoIngreso = calculator.ObtenerPeriodoDeAsociacion(socioData.FechaAsociacion);
 
             return await _Dbcontext.Socios
-                .Include(s => s.HistorialCuotas.Where(c => c.Anio > FechaAsociacionSocio.FechaAsociacion.Year || (c.Anio == FechaAsociacionSocio.FechaAsociacion.Year && c.Semestre >= semestreIngreso)))
+                .Include(s => s.HistorialCuotas
+                .Where(c => c.Anio > socioData.FechaAsociacion.Year ||
+                (c.Anio == socioData.FechaAsociacion.Year && c.NumeroPeriodo >= periodoIngreso)))
                 .FirstOrDefaultAsync(s => s.Id == id);
         }
 
-        public async Task<List<Socio>> GetSociosDeudores(int anioActual, int semestreActual)
+        public async Task<List<Socio>> GetSociosDeudores(int anioActual, int numeroPeriodoActual)
         {
             var deudores = await _Dbcontext.Socios
-                .Where(s => !s.HistorialCuotas.Any(c => c.Anio == anioActual && c.Semestre == semestreActual))
+                .Where(s => !s.HistorialCuotas.Any(c => c.Anio == anioActual && c.NumeroPeriodo == numeroPeriodoActual))
                 .AsNoTracking()
                 .ToListAsync();
 
             return deudores;
         }
 
-        public async Task<(List<Socio> Items, int TotalCount)> GetSociosDeudoresPaginado(int anioActual, int semestreActual, int pageNumber, int pageSize)
+        public async Task<(List<Socio> Items, int TotalCount)> GetSociosDeudoresPaginado(int anioActual, int numeroPeriodoActual, int pageNumber, int pageSize)
         {
             var query = _Dbcontext.Socios
                 .Include(s => s.Lote)
                 .AsNoTracking()
-                .Where(s => !s.HistorialCuotas.Any(c => c.Anio == anioActual && c.Semestre == semestreActual));
+                .Where(s => !s.HistorialCuotas.Any(c => c.Anio == anioActual && c.NumeroPeriodo == numeroPeriodoActual));
 
             int totalCount = await query.CountAsync();
 
@@ -150,11 +161,11 @@ namespace APIClub.Infrastructure.Persistence.Repositorio
             .ToListAsync();
         }
 
-        public async Task<(List<PreviewSocioForCobranzaDto> Items, int TotalCount)> GetSociosDeudoresByLote(int IdLote, int anioActual, int semestreActual, int pageNumber, int pageSize)
+        public async Task<(List<PreviewSocioForCobranzaDto> Items, int TotalCount)> GetSociosDeudoresByLote(int IdLote, int anioActual, int numeroPeriodoActual, int pageNumber, int pageSize)
         {
             var query = _Dbcontext.Socios.
                 Where(s => s.LoteId == IdLote && s.PreferenciaDePago == MetodosDePago.Cobrador && !s.HistorialCuotas
-                .Any(c => c.Anio == anioActual && c.Semestre == semestreActual))
+                .Any(c => c.Anio == anioActual && c.NumeroPeriodo == numeroPeriodoActual))
                 .AsNoTracking();
 
             int totalCount = await query.CountAsync();
@@ -174,34 +185,20 @@ namespace APIClub.Infrastructure.Persistence.Repositorio
                     s.Telefono,
                     s.Direcccion,
                     s.FechaAsociacion,
-                    CuotasPagas = s.HistorialCuotas.Select(c => new { c.Anio, c.Semestre }).ToList()
+                    CuotasPagas = s.HistorialCuotas.Select(c => new { c.Anio, NumeroPeriodo = c.NumeroPeriodo }).ToList()
                 })
                 .ToListAsync();
 
+            var calc = await _calculatorPeriodoProvider.GetCalculator();
             // Transformamos al DTO final
             var dtoSocios = socios.Select(s =>
             {
-                var periodosAdeudados = new List<PeriodoAdeudadoDto>();
-                int anioInicio = s.FechaAsociacion.Year;
-                int semestreInicio = s.FechaAsociacion.Month <= 6 ? 1 : 2;
+                var todosLosPeriodos = calc.GenerarPeriodosDesdeAsociacion(s.FechaAsociacion, anioActual, numeroPeriodoActual);
 
-                for (int anio = anioInicio; anio <= anioActual; anio++)
-                {
-                    int semestreDesde = (anio == anioInicio) ? semestreInicio : 1;
-                    int semestreHasta = (anio == anioActual) ? semestreActual : 2;
-
-                    for (int sem = semestreDesde; sem <= semestreHasta; sem++)
-                    {
-                        if (!s.CuotasPagas.Any(c => c.Anio == anio && c.Semestre == sem))
-                        {
-                            periodosAdeudados.Add(new PeriodoAdeudadoDto
-                            {
-                                Anio = anio,
-                                Semestre = sem
-                            });
-                        }
-                    }
-                }
+                var periodosAdeudados = todosLosPeriodos
+                    .Where(p => !s.CuotasPagas.Any(c => c.Anio == p.Anio && c.NumeroPeriodo == p.Periodo))
+                    .Select(p => new PeriodoAdeudadoDto { Anio = p.Anio, NumeroPeriodo = p.Periodo })
+                    .ToList();
 
                 return new PreviewSocioForCobranzaDto
                 {
@@ -219,11 +216,11 @@ namespace APIClub.Infrastructure.Persistence.Repositorio
             return (dtoSocios, totalCount);
         }
 
-        public async Task<List<Socio>> GetSociosDeudoresWithPreferenceLinkDePagoPaginado(int anioActual, int semestreActual, int pageNumber, int pageSize)
+        public async Task<List<Socio>> GetSociosDeudoresWithPreferenceLinkDePagoPaginado(int anioActual, int numeroPeriodoActual, int pageNumber, int pageSize)
         {
             var items = await _Dbcontext.Socios
                 .Where(s => s.PreferenciaDePago == MetodosDePago.LinkDePago &&
-                !s.HistorialCuotas.Any(c => c.Anio == anioActual && c.Semestre == semestreActual))
+                !s.HistorialCuotas.Any(c => c.Anio == anioActual && c.NumeroPeriodo == numeroPeriodoActual))
                 .AsNoTracking()
                 .OrderBy(s => s.Apellido)
                 .ThenBy(s => s.Nombre)

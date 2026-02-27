@@ -44,6 +44,7 @@ namespace APIClub.Infrastructure.Persistence.Data
                 await _appDbcontext.Database.ExecuteSqlRawAsync("TRUNCATE TABLE \"Lotes\" RESTART IDENTITY CASCADE;");
                 await _appDbcontext.Database.ExecuteSqlRawAsync("TRUNCATE TABLE \"Salones\" RESTART IDENTITY CASCADE;");
                 await _appDbcontext.Database.ExecuteSqlRawAsync("TRUNCATE TABLE \"MontoCuota\" RESTART IDENTITY CASCADE;");
+                await _appDbcontext.Database.ExecuteSqlRawAsync("TRUNCATE TABLE \"ConfiguracionesPeriodo\" RESTART IDENTITY CASCADE;");
 
                 await _appDbcontext.Database.ExecuteSqlRawAsync("SET session_replication_role = 'origin';");
             }
@@ -148,13 +149,13 @@ namespace APIClub.Infrastructure.Persistence.Data
                 // Generar cuotas desde su alta hasta hoy o su baja
                 var fechaFin = socio.FechaDeBaja ?? hoy;
                 var currentYear = socio.FechaAsociacion.Year;
-                var currentSemestre = socio.FechaAsociacion.Month <= 6 ? 1 : 2;
+                int currentPeriodo = ((socio.FechaAsociacion.Month - 1) / 6) + 1; // Por defecto semestral para seed
 
-                while (currentYear < fechaFin.Year || (currentYear == fechaFin.Year && (currentSemestre == 1 || (currentSemestre == 2 && fechaFin.Month >= 7))))
+                while (currentYear < fechaFin.Year || (currentYear == fechaFin.Year && (currentPeriodo == 1 || (currentPeriodo == 2 && fechaFin.Month >= 7))))
                 {
                     // Determinar monto según el año/semestre
                     decimal monto = 3000;
-                    if (currentYear == 2024 && currentSemestre == 2) monto = 5000;
+                    if (currentYear == 2024 && currentPeriodo == 2) monto = 5000;
                     if (currentYear >= 2025) monto = 8000;
 
                     // Decidir si pagó (80% probabilidad si es activo, 100% si es baja previa)
@@ -162,7 +163,7 @@ namespace APIClub.Infrastructure.Persistence.Data
 
                     if (pago)
                     {
-                        var mesPago = currentSemestre == 1 ? _random.Next(1, 7) : _random.Next(7, 13);
+                        var mesPago = currentPeriodo == 1 ? _random.Next(1, 7) : _random.Next(7, 13);
                         var fechaPago = new DateOnly(currentYear, mesPago, _random.Next(1, 28));
 
                         if (fechaPago <= hoy)
@@ -171,7 +172,7 @@ namespace APIClub.Infrastructure.Persistence.Data
                             {
                                 SocioId = socio.Id,
                                 Anio = currentYear,
-                                Semestre = currentSemestre,
+                                NumeroPeriodo = currentPeriodo,
                                 Monto = monto,
                                 FechaPago = fechaPago,
                                 FormaDePago = socio.PreferenciaDePago
@@ -191,9 +192,9 @@ namespace APIClub.Infrastructure.Persistence.Data
                         }
                     }
 
-                    // Avanzar al siguiente semestre
-                    if (currentSemestre == 1) { currentSemestre = 2; }
-                    else { currentSemestre = 1; currentYear++; }
+                    // Avanzar al siguiente semestre (logic simple para seed)
+                    if (currentPeriodo == 1) { currentPeriodo = 2; }
+                    else { currentPeriodo = 1; currentYear++; }
 
                     // No pasarnos del año actual real (2026 en este caso)
                     if (currentYear > 2026) break;

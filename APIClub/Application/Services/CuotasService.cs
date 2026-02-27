@@ -2,7 +2,6 @@
 using APIClub.Application.Dtos.Cuota;
 using APIClub.Application.Dtos.Socios;
 using APIClub.Domain.Enums;
-using APIClub.Domain.GestionSocios.Models;
 using APIClub.Domain.GestionSocios.Repositories;
 using APIClub.Domain.ModuloGestionCobradores.Models;
 using APIClub.Domain.ModuloGestionCobradores.Repositorios;
@@ -20,8 +19,8 @@ namespace APIClub.Application.Services
         private readonly IPagoCuotaValidator _Validator;
         private readonly UnitOfWork _UnitOfWork;
 
-        public CuotasService(ICuotaRepository cuotaRepository, IPagoCuotaValidator validator, IHistorialCobradoresRepository historialCobradoresRepository,
-            UnitOfWork unitOfWork)
+        public CuotasService(ICuotaRepository cuotaRepository, IPagoCuotaValidator validator,
+            IHistorialCobradoresRepository historialCobradoresRepository, UnitOfWork unitOfWork)
         {
             _CuotaRepository = cuotaRepository;
             _Validator = validator;
@@ -29,18 +28,18 @@ namespace APIClub.Application.Services
             _UnitOfWork = unitOfWork;
         }
 
-        public async Task<Result<object>> ActualizarValorCuota(decimal nuevoValor)
+        public async Task<Result<object?>> ActualizarValorCuota(decimal nuevoValor)
         {
             var fechaActualizacion = DateTime.Now;
             await _CuotaRepository.ActualizarValorCuota(nuevoValor, fechaActualizacion);
-            return Result<object>.Exito("al valor de la cuoata ahora es $" + nuevoValor);
+            return Result<object?>.Exito("al valor de la cuoata ahora es $" + nuevoValor);
         }
 
-        public async Task<Result<object>> RegistrarPagosCuotas(int idSocio, List<PeriodoAdeudadoDto> periodos, MetodosDePago formaPago)
+        public async Task<Result<object?>> RegistrarPagosCuotas(int idSocio, List<PeriodoAdeudadoDto> periodos, MetodosDePago formaPago)
         {
             var result = await _Validator.ValidarPagoEnEstablecimeinto(idSocio, periodos);
 
-            if (!result.Exit) return Result<object>.Error(result.Errormessage, result.Errorcode);
+            if (!result.Exit) return Result<object?>.Error(result.Errormessage, result.Errorcode);
 
             var socio = result.Data;
             var now = DateOnly.FromDateTime(DateTime.Now);
@@ -56,7 +55,7 @@ namespace APIClub.Application.Services
                     Monto = valorCuotaActual,
                     FormaDePago = formaPago,
                     Anio = periodo.Anio,
-                    Semestre = periodo.Semestre,
+                    NumeroPeriodo = periodo.NumeroPeriodo,
                     SocioId = socio.Id
                 };
 
@@ -65,16 +64,13 @@ namespace APIClub.Application.Services
 
             if (nuevasCuotas.Count == 0)
             {
-                return Result<object>.Error("No se seleccionaron periodos para pagar.", 400);
+                return Result<object?>.Error("para poder registrar el pago, debe seleccionar los periodos  que se desean pagar", 400);
             }
 
             _CuotaRepository.RegistrarCuotas(nuevasCuotas);
             await _UnitOfWork.SaveChangesAsync();
 
-            return Result<object>.Exito(new
-            {
-                Mensaje = "Pagos de cuota registrados exitosamente."
-            });
+            return Result<object?>.Exito(null);
         }
 
         public async Task<Result<object?>> RegistrarPagosCuotasCobrador(int idSocio, List<PeriodoAdeudadoDto> periodos, int idUsuario)
@@ -105,7 +101,7 @@ namespace APIClub.Application.Services
                     Monto = valorCuotaActual,
                     FormaDePago = MetodosDePago.Cobrador,
                     Anio = periodo.Anio,
-                    Semestre = periodo.Semestre,
+                    NumeroPeriodo = periodo.NumeroPeriodo,
                     SocioId = socio.Id
                 };
 
@@ -125,7 +121,7 @@ namespace APIClub.Application.Services
             });
         }
 
-        public async Task<Result<object>> RegistrarPagoCuoataOnline(PaymentToken token)
+        public async Task<Result<object?>> RegistrarPagoCuoataOnline(PaymentToken token)
         {
             var fechaPago = DateOnly.FromDateTime(DateTime.Now);
             var valorCuotaActual = await _CuotaRepository.ObtenerValorCuota();
@@ -136,14 +132,14 @@ namespace APIClub.Application.Services
                 Monto = valorCuotaActual,
                 FormaDePago = MetodosDePago.LinkDePago,
                 Anio = token.anio,
-                Semestre = token.semestre,
+                NumeroPeriodo = token.numeroPeriodo,
                 SocioId = token.IdSocio
             };
 
             _CuotaRepository.RegistrarCuotas(new List<Cuota> { nuevaCuota });
             await _UnitOfWork.SaveChangesAsync();
 
-            return Result<object>.Exito(new
+            return Result<object?>.Exito(new
             {
                 Mensaje = "Pago de cuota registrado exitosamente.",
                 Cuota = nuevaCuota
@@ -169,14 +165,14 @@ namespace APIClub.Application.Services
             }
             else if (request.TipoFiltro.ToLower() == "periodo")
             {
-                if (!request.Anio.HasValue || !request.Semestre.HasValue)
+                if (!request.Anio.HasValue || !request.NumeroPeriodo.HasValue)
                 {
-                    return Result<PagedResult<CuotaConSocioDto>>.Error("Debe proporcionar año y semestre para filtrar por periodo.", 400);
+                    return Result<PagedResult<CuotaConSocioDto>>.Error("Debe proporcionar año y el número del período para filtrar por periodo.", 400);
                 }
 
                 resultado = await _CuotaRepository.ObtenerCuotasPorPeriodo(
                     request.Anio.Value,
-                    request.Semestre.Value,
+                    request.NumeroPeriodo.Value,
                     request.PageNumber,
                     request.PageSize
                 );

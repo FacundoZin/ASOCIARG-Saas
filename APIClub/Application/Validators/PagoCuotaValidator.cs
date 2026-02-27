@@ -10,13 +10,15 @@ namespace APIClub.Application.Validators
 {
     public class PagoCuotaValidator : IPagoCuotaValidator
     {
-        private ISocioRepository _socioRepository;
-        private IUsuariosRepository _usuariosRepository;
+        private readonly ISocioRepository _socioRepository;
+        private readonly IUsuariosRepository _usuariosRepository;
+        private readonly ICuotaRepository _cuotaRepository;
 
-        public PagoCuotaValidator(ISocioRepository socioRepository, IUsuariosRepository usuariosRepository)
+        public PagoCuotaValidator(ISocioRepository socioRepository, IUsuariosRepository usuariosRepository, ICuotaRepository cuotaRepository)
         {
             _socioRepository = socioRepository;
             _usuariosRepository = usuariosRepository;
+            _cuotaRepository = cuotaRepository;
         }
 
         public async Task<Result<Socio>> ValidarPagoConCobrador(int idSocio, int idUsuarioSistema, List<PeriodoAdeudadoDto> periodos)
@@ -29,16 +31,14 @@ namespace APIClub.Application.Validators
             if (usuario.Rol != RolUsuario.Cobrador)
                 return Result<Socio>.Error("solamente los cobradores pueden registrar este tipo de pagos", 403);
 
-            var socio = await _socioRepository.GetSocioByIdWithCuotas(idSocio);
+            var socio = await _socioRepository.GetSocioById(idSocio);
             if (socio == null)
                 return Result<Socio>.Error("Socio no encontrado.", 404);
 
             foreach (var periodo in periodos)
             {
-                if (socio.HistorialCuotas.Any(c => c.Anio == periodo.Anio && c.Semestre == periodo.Semestre))
-                {
-                    return Result<Socio>.Error($"El periodo {periodo.Anio}/{periodo.Semestre} ya se encuentra pago.", 400);
-                }
+                if (await _cuotaRepository.PeriodoYaPagado(idSocio, periodo.Anio, periodo.NumeroPeriodo))
+                    return Result<Socio>.Error($"El periodo {periodo.Anio}/{periodo.NumeroPeriodo} ya se encuentra pago.", 400);
             }
 
             return Result<Socio>.Exito(socio);
@@ -46,16 +46,14 @@ namespace APIClub.Application.Validators
 
         public async Task<Result<Socio>> ValidarPagoEnEstablecimeinto(int idSocio, List<PeriodoAdeudadoDto> periodos)
         {
-            var socio = await _socioRepository.GetSocioByIdWithCuotas(idSocio);
+            var socio = await _socioRepository.GetSocioById(idSocio);
             if (socio == null)
                 return Result<Socio>.Error("Socio no encontrado.", 404);
 
             foreach (var periodo in periodos)
             {
-                if (socio.HistorialCuotas.Any(c => c.Anio == periodo.Anio && c.Semestre == periodo.Semestre))
-                {
-                    return Result<Socio>.Error($"El periodo {periodo.Anio}/{periodo.Semestre} ya se encuentra pago.", 400);
-                }
+                if (await _cuotaRepository.PeriodoYaPagado(idSocio, periodo.Anio, periodo.NumeroPeriodo))
+                    return Result<Socio>.Error($"El periodo {periodo.Anio}/{periodo.NumeroPeriodo} ya se encuentra pago.", 400);
             }
 
             return Result<Socio>.Exito(socio);

@@ -56,7 +56,7 @@ namespace APIClub.Contrrollers
             [FromQuery] string tipoFiltro = "fecha",
             [FromQuery] string? fechaPago = null,
             [FromQuery] int? anio = null,
-            [FromQuery] int? semestre = null,
+            [FromQuery] int? numeroPeriodo = null,
             [FromQuery] int pageNumber = 1,
             [FromQuery] int pageSize = 10)
         {
@@ -65,7 +65,7 @@ namespace APIClub.Contrrollers
                 TipoFiltro = tipoFiltro,
                 FechaPago = !string.IsNullOrEmpty(fechaPago) ? DateOnly.Parse(fechaPago) : null,
                 Anio = anio,
-                Semestre = semestre,
+                NumeroPeriodo = numeroPeriodo,
                 PageNumber = pageNumber,
                 PageSize = pageSize
             };

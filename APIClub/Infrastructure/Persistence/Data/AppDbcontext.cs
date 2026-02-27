@@ -1,5 +1,6 @@
 ﻿using APIClub.Domain.AlquilerArticulos.Models;
 using APIClub.Domain.Auth.Models;
+using APIClub.Domain.ClientConfigs.Models;
 using APIClub.Domain.Enums;
 using APIClub.Domain.GestionSocios.Models;
 using APIClub.Domain.ModuloGestionCobradores.Models;
@@ -35,6 +36,8 @@ namespace APIClub.Infrastructure.Persistence.Data
         public DbSet<Viaje> Viajes { get; set; }
         public DbSet<InscriptoViaje> Inscriptos { get; set; }
         public DbSet<VarianteViaje> VariantesViaje { get; set; }
+        public DbSet<ConfiguracionCuotas> ConfiguracionCuotas { get; set; }
+        public DbSet<GeneralAssociationConfigs> configuracionAsociacion { get; set; }
 
 
 
@@ -86,7 +89,7 @@ namespace APIClub.Infrastructure.Persistence.Data
             {
                 entity.Property(c => c.Monto).HasColumnType("decimal(18,2)");
                 entity.Property(c => c.Anio);
-                entity.Property(c => c.Semestre);
+                entity.Property(c => c.NumeroPeriodo);
             });
 
             modelBuilder.Entity<ReservaSalon>(entity =>
@@ -281,6 +284,13 @@ namespace APIClub.Infrastructure.Persistence.Data
                     Direccion = "Av. Siempre Viva 742"
                 }
             );
+
+            modelBuilder.Entity<ConfiguracionCuotas>(entity =>
+            {
+                entity.HasKey(c => c.Id);
+                entity.Property(c => c.TipoPeriodo).IsRequired();
+                entity.Property(c => c.DiaVencimiento).IsRequired();
+            });
         }
     }
 }
