@@ -10,7 +10,7 @@ namespace APIClub.Domain.ModuloGestionCuotas.Models
         public decimal Monto { get; set; }
         public MetodosDePago FormaDePago { get; set; }
         public int Anio { get; set; }
-        public int Semestre { get; set; }
+        public int NumeroPeriodo { get; set; }
 
 
         // Relaciones
@@ -18,5 +18,5 @@ namespace APIClub.Domain.ModuloGestionCuotas.Models
         public Socio? Socio { get; set; }
 
     }
- 
+
 }

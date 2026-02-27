@@ -11,6 +11,7 @@ namespace APIClub.Domain.GestionSocios.Repositories
         void RegistrarCuotas(IEnumerable<Cuota> cuotas);
 
         Task<PagedResult<CuotaConSocioDto>> ObtenerCuotasPorFechaPago(DateOnly fechaPago, int pageNumber, int pageSize);
-        Task<PagedResult<CuotaConSocioDto>> ObtenerCuotasPorPeriodo(int anio, int semestre, int pageNumber, int pageSize);
+        Task<PagedResult<CuotaConSocioDto>> ObtenerCuotasPorPeriodo(int anio, int numeroPeriodo, int pageNumber, int pageSize);
+        Task<bool> PeriodoYaPagado(int socioId, int anio, int numeroPeriodo);
     }
 }
