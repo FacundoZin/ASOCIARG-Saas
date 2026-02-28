@@ -9,7 +9,7 @@ namespace APIClub.Application.Dtos.Cuota
 
         // Para filtro por periodo
         public int? Anio { get; set; }
-        public int? Semestre { get; set; }
+        public int? NumeroPeriodo { get; set; }
 
         // Paginación
         public int PageNumber { get; set; } = 1;

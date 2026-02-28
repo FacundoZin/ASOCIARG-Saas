@@ -9,7 +9,7 @@ namespace APIClub.Application.Dtos.Cuota
         public decimal Monto { get; set; }
         public MetodosDePago FormaDePago { get; set; }
         public int Anio { get; set; }
-        public int Semestre { get; set; }
+        public int NumeroPeriodo { get; set; }
 
         // Datos del socio
         public string NombreSocio { get; set; } = string.Empty;
