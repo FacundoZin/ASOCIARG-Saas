@@ -44,7 +44,7 @@ namespace APIClub.Application.Validators
                 var ResultFormateo = dto.Telefono.FormatearNumero();
                 telefonoFormateado = ResultFormateo.Data;
 
-                if(!ResultFormateo.Exit)
+                if (!ResultFormateo.Exit)
                     return Result<object?>.Error(ResultFormateo.Errormessage, ResultFormateo.Errorcode);
             }
 
@@ -59,7 +59,7 @@ namespace APIClub.Application.Validators
             }
 
             if (dto.PreferenciaDePago == MetodosDePago.Cobrador && dto.IdLote == null)
-                return Result<object?>.Error("si elsocio va a pagar con cobrador es necesario asignarle un lote", 400);
+                return Result<object?>.Error("si el socio va a pagar con cobrador es necesario asignarle un lote", 400);
 
             return Result<object?>.Exito(null);
         }

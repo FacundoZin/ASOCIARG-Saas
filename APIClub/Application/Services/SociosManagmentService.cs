@@ -5,6 +5,7 @@ using APIClub.Domain.GestionSocios;
 using APIClub.Domain.GestionSocios.Models;
 using APIClub.Domain.GestionSocios.Repositories;
 using APIClub.Domain.GestionSocios.Validations;
+using APIClub.Domain.Shared.DomainServices;
 
 namespace APIClub.Application.Services
 {
@@ -12,11 +13,16 @@ namespace APIClub.Application.Services
     {
         private readonly ISocioRepository _SocioRepository;
         private readonly ISocioIntegrityValidator _validator;
+        private readonly CalculatorPeriodoProvider _calculatorPeriodoProvider;
+        private readonly SocioDeudorService _socioDeudorService;
 
-        public SociosManagmentService(ISocioRepository socioRepository, ISocioIntegrityValidator validator)
+        public SociosManagmentService(ISocioRepository socioRepository, ISocioIntegrityValidator validator,
+        CalculatorPeriodoProvider calculatorPeriodoProvider, SocioDeudorService socioDeudorService)
         {
             _SocioRepository = socioRepository;
             _validator = validator;
+            _calculatorPeriodoProvider = calculatorPeriodoProvider;
+            _socioDeudorService = socioDeudorService;
         }
 
 
@@ -90,32 +96,8 @@ namespace APIClub.Application.Services
                 return Result<SocioDebtPreviewDto>.Error("No se encontró un socio con ese DNI.", 404);
             }
 
-            var hoy = DateTime.Now;
-            int anioActual = hoy.Year;
-            int semestreActual = hoy.Month <= 6 ? 1 : 2;
+            var periodosAdeudados = await _socioDeudorService.GetPeriodosAdeudados(socio.HistorialCuotas, socio.FechaAsociacion);
 
-
-            var periodosAdeudados = new List<PeriodoAdeudadoDto>();
-            int anioInicio = socio.FechaAsociacion.Year;
-            int semestreInicio = socio.FechaAsociacion.Month <= 6 ? 1 : 2;
-
-            for (int anio = anioInicio; anio <= anioActual; anio++)
-            {
-                int semestreDesde = (anio == anioInicio) ? semestreInicio : 1;
-                int semestreHasta = (anio == anioActual) ? semestreActual : 2;
-
-                for (int sem = semestreDesde; sem <= semestreHasta; sem++)
-                {
-                    if (!socio.HistorialCuotas.Any(c => c.Anio == anio && c.Semestre == sem))
-                    {
-                        periodosAdeudados.Add(new PeriodoAdeudadoDto
-                        {
-                            Anio = anio,
-                            Semestre = sem
-                        });
-                    }
-                }
-            }
 
             var dto = new SocioDebtPreviewDto
             {
@@ -138,11 +120,7 @@ namespace APIClub.Application.Services
 
         public async Task<Result<PagedResult<SocioCardDto>>> GetSociosDeudores(int pageNumber, int pageSize)
         {
-            var fechaPagoActual = DateOnly.FromDateTime(DateTime.Now);
-            int anioActual = fechaPagoActual.Year;
-            int semestreActual = fechaPagoActual.Month <= 6 ? 1 : 2;
-
-            var (socios, totalCount) = await _SocioRepository.GetSociosDeudoresPaginado(anioActual, semestreActual, pageNumber, pageSize);
+            var (socios, totalCount) = await _SocioRepository.GetSociosDeudoresPaginado(pageNumber, pageSize);
 
             var items = socios.Select(s => new SocioCardDto
             {
@@ -238,47 +216,34 @@ namespace APIClub.Application.Services
                 return Result<FullSocioDto>.Error("No se encontró un socio con ese ID.", 404);
             }
 
-            var hoy = DateTime.Now;
-            int anioActual = hoy.Year;
-            int semestreActual = hoy.Month <= 6 ? 1 : 2;
-
-            int maxAnioPagado = socio.HistorialCuotas.Any() ? Math.Max(anioActual, socio.HistorialCuotas.Max(c => c.Anio)) : anioActual;
-            int maxSemestrePagado = (maxAnioPagado == anioActual) ? semestreActual : socio.HistorialCuotas.Where(c => c.Anio == maxAnioPagado).Max(c => (int?)c.Semestre) ?? 2;
-
+            var calc = await _calculatorPeriodoProvider.GetCalculator();
             var periodosCuotas = new List<PeriodoCuotasDto>();
-            int anioAsociacion = socio.FechaAsociacion.Year;
-            int semestreInicio = socio.FechaAsociacion.Month <= 6 ? 1 : 2;
+            var todosLosPeriodos = calc.GenerarPeriodosDesdeAsociacion(socio.FechaAsociacion);
 
-            for (int anio = anioAsociacion; anio <= maxAnioPagado; anio++)
+            foreach (var periodo in todosLosPeriodos)
             {
-                int semestreDesde = (anio == anioAsociacion) ? semestreInicio : 1;
-                int semestreHasta = (anio == maxAnioPagado) ? maxSemestrePagado : 2;
+                var cuota = socio.HistorialCuotas.FirstOrDefault(c => c.Anio == periodo.Anio && c.NumeroPeriodo == periodo.Periodo);
 
-                for (int sem = semestreDesde; sem <= semestreHasta; sem++)
+                if (cuota == null)
                 {
-                    var cuota = socio.HistorialCuotas.FirstOrDefault(c => c.Anio == anio && c.Semestre == sem);
-
-                    if (cuota == null)
+                    periodosCuotas.Add(new PeriodoCuotasDto
                     {
-                        periodosCuotas.Add(new PeriodoCuotasDto
-                        {
-                            anio = anio,
-                            semestre = sem,
-                            pagado = false,
-                        });
-                    }
-                    else
+                        anio = periodo.Anio,
+                        numeroPeriodo = periodo.Periodo,
+                        pagado = false,
+                    });
+                }
+                else
+                {
+                    periodosCuotas.Add(new PeriodoCuotasDto
                     {
-                        periodosCuotas.Add(new PeriodoCuotasDto
-                        {
-                            FechaDePago = cuota.FechaPago,
-                            ImportePagado = cuota.Monto,
-                            MetodoDePago = cuota.FormaDePago,
-                            anio = anio,
-                            semestre = sem,
-                            pagado = true,
-                        });
-                    }
+                        FechaDePago = cuota.FechaPago,
+                        ImportePagado = cuota.Monto,
+                        MetodoDePago = cuota.FormaDePago,
+                        anio = periodo.Anio,
+                        numeroPeriodo = periodo.Periodo,
+                        pagado = true,
+                    });
                 }
             }
 
@@ -294,8 +259,8 @@ namespace APIClub.Application.Services
                 IdLote = socio.LoteId,
                 Localidad = socio.Localidad,
                 FechaAsociacion = socio.FechaAsociacion,
-                AdeudaCuotas = periodosCuotas.Any(c => c.pagado == false),
-                HistorialCuotas = periodosCuotas.OrderBy(p => p.anio).ThenBy(p => p.semestre).ToList(),
+                AdeudaCuotas = await _socioDeudorService.IsDeudor(socio.HistorialCuotas, socio.FechaAsociacion),
+                HistorialCuotas = periodosCuotas.OrderBy(p => p.anio).ThenBy(p => p.numeroPeriodo).ToList(),
             };
 
             return Result<FullSocioDto>.Exito(dto);
@@ -333,10 +298,6 @@ namespace APIClub.Application.Services
 
         public async Task<Result<PagedResult<socioCardSinEstadoDto>>> GetPadronSocios(int pageNumber, int PageSize)
         {
-            var fechaPagoActual = DateOnly.FromDateTime(DateTime.Now);
-            int anioActual = fechaPagoActual.Year;
-            int semestreActual = fechaPagoActual.Month <= 6 ? 1 : 2;
-
             var (socios, totalCount) = await _SocioRepository.GetSociosPaginado(pageNumber, PageSize);
 
             var items = socios.Select(s => new socioCardSinEstadoDto
@@ -355,6 +316,8 @@ namespace APIClub.Application.Services
 
             return Result<PagedResult<socioCardSinEstadoDto>>.Exito(result);
         }
+
+
     }
 }
 

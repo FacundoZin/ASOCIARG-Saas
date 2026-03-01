@@ -20,7 +20,7 @@ namespace APIClub.Application.Services
                 var config = await _ConfigRepo.GetConfigurationCuotas();
 
                 if (config == null)
-                    throw new Exception("La configuraci�n de cuotas no existe.");
+                    throw new Exception("La configuracion de cuotas no existe.");
 
                 _Calculator = new PeriodoCalculator(config!);
             }
@@ -32,7 +32,7 @@ namespace APIClub.Application.Services
             var config = await _ConfigRepo.GetConfigurationCuotas();
 
             if (config == null)
-                throw new Exception("La configuraci�n de cuotas no existe.");
+                throw new Exception("La configuracion de cuotas no existe.");
 
             _Calculator = new PeriodoCalculator(config);
         }

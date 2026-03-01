@@ -7,6 +7,9 @@ namespace APIClub.Domain.Shared.DomainServices
     {
         private readonly ConfiguracionCuotas _config;
 
+        public int MesesPorPeriodo => _config.MesesPorPeriodo;
+        public int PeriodosPorAnio => _config.PeriodosPorAnio;
+
         public PeriodoCalculator(ConfiguracionCuotas config)
         {
             _config = config;
@@ -41,11 +44,11 @@ namespace APIClub.Domain.Shared.DomainServices
         /// <summary>
         /// Genera todos los períodos que un socio debería haber pagado
         /// desde su fecha de asociación hasta el período actual.
-        /// Reemplaza: los loops `for (int anio = anioInicio; anio <= anioActual; anio++) { for (int sem = semestreDesde; sem <= semestreHasta; sem++) {...} }`
         /// </summary>
-        public List<(int Anio, int Periodo)> GenerarPeriodosDesdeAsociacion(
-            DateOnly fechaAsociacion, int anioActual, int periodoActual)
+        public List<(int Anio, int Periodo)> GenerarPeriodosDesdeAsociacion(DateOnly fechaAsociacion)
         {
+            var anioActual = DateTime.Now.Year;
+            var periodoActual = ObtenerPeriodoActual();
             var periodos = new List<(int Anio, int Periodo)>();
             int anioInicio = fechaAsociacion.Year;
             int periodoInicio = ObtenerPeriodoDeAsociacion(fechaAsociacion);
@@ -108,11 +111,24 @@ namespace APIClub.Domain.Shared.DomainServices
         }
 
         /// <summary>
-        /// Obtiene el mes de fin de un período específico.
+        /// Obtiene el mes de final de un período específico.
         /// </summary>
-        public int ObtenerMesFinPeriodo(int numeroPeriodo)
+        public int ObtenerMesFinalDelPeriodo(int numeroPeriodo)
         {
             return numeroPeriodo * _config.MesesPorPeriodo;
+        }
+
+        /// <summary>
+        /// Calcula la fecha exacta de vencimiento de un período dado.
+        /// El vencimiento ocurre el día configurado (DiaVencimiento) del último mes del período.
+        /// Si el día configurado supera los días del mes, se usa el último día del mes.
+        /// </summary>
+        public DateOnly ObtenerFechaVencimientoPeriodo(int anio, int numeroPeriodo)
+        {
+            int mesVencimiento = ObtenerMesFinalDelPeriodo(numeroPeriodo);
+            int diaMaximo = DateTime.DaysInMonth(anio, mesVencimiento);
+            int dia = Math.Min(_config.DiaVencimiento, diaMaximo);
+            return new DateOnly(anio, mesVencimiento, dia);
         }
 
         private string ObtenerNombreMes(int mes) => mes switch
