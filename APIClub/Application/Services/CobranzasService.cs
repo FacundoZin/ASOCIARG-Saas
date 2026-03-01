@@ -2,6 +2,7 @@
 using APIClub.Application.Dtos.Cobrador;
 using APIClub.Application.Dtos.Lote;
 using APIClub.Application.Dtos.Socios;
+using APIClub.Application.Helpers;
 using APIClub.Domain.Auth.Repositories;
 using APIClub.Domain.GestionSocios.Repositories;
 using APIClub.Domain.ModuloGestionCobradores.Models;
@@ -18,13 +19,17 @@ namespace APIClub.Application.Services
         private readonly IUsuariosRepository _UsuariosRepository;
         private readonly AppDbcontext _context;
         private readonly IHistorialCobradoresRepository _historialCobradoresRepository;
+        private readonly CalculatorPeriodoProvider _calculatorPeriodoProvider;
+
         public CobranzasService(ISocioRepository sociosRepository, AppDbcontext context, IUsuariosRepository usuariosRepository,
-            IHistorialCobradoresRepository historialCobradoresRepository)
+            IHistorialCobradoresRepository historialCobradoresRepository,
+            CalculatorPeriodoProvider calculatorPeriodoProvider)
         {
             _SociosRepository = sociosRepository;
             _context = context;
             _UsuariosRepository = usuariosRepository;
             _historialCobradoresRepository = historialCobradoresRepository;
+            _calculatorPeriodoProvider = calculatorPeriodoProvider;
         }
 
         public async Task<List<PreviewLote>> GetLotesPreview()
@@ -46,13 +51,33 @@ namespace APIClub.Application.Services
         {
             try
             {
-                var hoy = DateTime.Now;
-                int anioActual = hoy.Year;
-                int semestreActual = hoy.Month <= 6 ? 1 : 2;
+                var (socios, totalCount) = await _SociosRepository.GetSociosDeudoresByLote(Idlote, pageNumber, pageSize);
 
-                var (dto, totalCount) = await _SociosRepository.GetSociosDeudoresByLote(Idlote, anioActual, semestreActual, pageNumber, pageSize);
+                var calc = await _calculatorPeriodoProvider.GetCalculator();
 
-                var pagedResult = new PagedResult<PreviewSocioForCobranzaDto>(dto, totalCount, pageNumber, pageSize);
+                var dtoSocios = socios.Select(s =>
+                {
+                    var todosLosPeriodos = calc.GenerarPeriodosDesdeAsociacion(s.FechaAsociacion);
+
+                    var periodosAdeudados = todosLosPeriodos
+                        .Where(p => !s.HistorialCuotas.Any(c => c.Anio == p.Anio && c.NumeroPeriodo == p.Periodo))
+                        .Select(p => new PeriodoAdeudadoDto { Anio = p.Anio, NumeroPeriodo = p.Periodo })
+                        .ToList();
+
+                    return new PreviewSocioForCobranzaDto
+                    {
+                        Id = s.Id,
+                        Nombre = s.Nombre,
+                        Apellido = s.Apellido,
+                        Dni = s.Dni,
+                        Telefono = s.Telefono?.FormatearForUserVisibility(),
+                        Direcccion = s.Direcccion,
+                        PeriodosAdeudados = periodosAdeudados
+                    };
+
+                }).ToList();
+
+                var pagedResult = new PagedResult<PreviewSocioForCobranzaDto>(dtoSocios, totalCount, pageNumber, pageSize);
 
                 return Result<PagedResult<PreviewSocioForCobranzaDto>>.Exito(pagedResult);
 

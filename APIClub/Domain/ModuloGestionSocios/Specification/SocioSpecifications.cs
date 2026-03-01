@@ -10,20 +10,31 @@ namespace APIClub.Domain.ModuloGestionSocios.Specification
     public static class SocioSpecifications
     {
         /// <summary>
-        /// Define una especificación para determinar si un socio es deudor basándose en la fecha de vencimiento del periodo actual.
+        /// Define una especificación para determinar si un socio es deudor comparando 
+        /// la cantidad de periodos que deberian haber pagado con la cantidad de periodos que pagaron 
         /// </summary>
         /// <param name="calc">Servicio para el cálculo de periodos y fechas de vencimiento.</param>
-        /// <returns>Una expresión booleana evaluable por un proveedor de datos.</returns>
-        public static Expression<Func<Socio, bool>> EsDeudorTeniendoEnCuentaFechaDeVencimiento(
-            PeriodoCalculator calc)
+        /// <returns>Una expresión booleana evaluable por un filtro</returns>
+        public static Expression<Func<Socio, bool>> EsDeudor(
+            PeriodoCalculator calc, bool ContemplaVencimientoCuota)
         {
             var fechaHoy = DateOnly.FromDateTime(DateTime.Now);
             var anioActual = fechaHoy.Year;
             var numeroPeriodoActual = calc.ObtenerPeriodoActual();
             var fechaVencimiento = calc.ObtenerFechaVencimientoPeriodo(anioActual, numeroPeriodoActual);
 
-            // Si la fecha de hoy es mayor a la fecha de vencimiento, se considera que el socio adeuda la cuota del perido actual.
-            int offset = fechaHoy > fechaVencimiento ? 1 : 0;
+            int offset = 0;
+
+            if (ContemplaVencimientoCuota)
+            {
+                offset = fechaHoy > fechaVencimiento ? 1 : 0;
+            }
+            else
+            {
+                // Si NO se tiene en cuenta vencimiento,
+                // el período actual siempre es exigible.
+                offset = 1;
+            }
 
             int mesesPorPeriodo = calc.MesesPorPeriodo;
             int periodosPorAnio = calc.PeriodosPorAnio;
@@ -48,6 +59,8 @@ namespace APIClub.Domain.ModuloGestionSocios.Specification
                     )
                 );
         }
+
+
     }
 }
 
